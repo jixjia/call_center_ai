@@ -33,6 +33,14 @@ Version:    1.4
 
 ## Setup Guide
 
+### 0. Install
+
+Install dependencies. This solution is tested on `Python 3.7+`
+
+```python
+pip install -r requirements.txt
+```
+
 ### 1. Run the app
 
 For Unix:

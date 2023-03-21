@@ -35,11 +35,13 @@ Version:    1.4
 
 ### 0. Install
 
-Install dependencies. This solution is tested on `Python 3.7+`
+Install dependencies. This solution has been tested on `Python 3.7~3.10`
 
 ```python
 pip install -r requirements.txt
 ```
+
+<br>
 
 ### 1. Run the app
 

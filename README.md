@@ -1,13 +1,12 @@
 ## Contact Center AI Solution with GPT
 
-This solution demonstrates applying Microsoft AI and GPT to help solve challenges faced by contact center scenario     
+This solution demonstrates the application of Microsoft AI and GPT to help solve the challenges of contact center scenarios
 
 Author:     Jixin Jia (Gin)     
 Created:    2023/03/01    
 Version:    1.4
   
 <hr>
-<br>
 
 ## About    
 
@@ -27,14 +26,14 @@ Version:    1.4
 
 ## See it in action
 
-![Animated Demo](animated_demo.gif)
+![Animated Demo](doc/animated_demo.gif)
 
 
 <br>
 
 ## Setup Guide
 
-#### 1. Run the app
+### 1. Run the app
 
 For Unix:
 
@@ -48,6 +47,8 @@ For Windows:
 waitress-serve --listen=0.0.0.0:80 wsgi:app
 ```
 
+<br>
+
 ### 2. Open your favorite browser
 
 Type following in address bar:    
@@ -57,12 +58,13 @@ Type following in address bar:
 
 ### 3. Add keys into Setup page
 
-![Setup screenshot](setup.jpg)
+![Setup screenshot](doc/setup.jpg)
 
 <br>
 
 ### 4. Press mic button and start talking to it
 
-![Setup screenshot](start_stop.jpg)
+![Setup screenshot](doc/start_stop.jpg)
 
 
+Enjoy the demo !

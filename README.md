@@ -8,6 +8,8 @@ Version:    1.4
   
 <hr>
 
+<br>
+
 ## Key Features  
 
 1. `Transcribe` conversations in real-time
@@ -16,6 +18,7 @@ Version:    1.4
 4. Analyze speech `sentiment` in live
 5. `Summarize conversation` and get a glance at important topics  
 
+<br>
 
 ## About    
 

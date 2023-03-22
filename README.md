@@ -1,12 +1,21 @@
 ## Contact Center AI Solution with GPT
 
-This solution demonstrates the application of Microsoft AI and GPT to help solve the challenges of contact center scenarios
+This solution demonstrates the application of Microsoft AI and GPT to help solve challenges common to contact center scenarios
 
 Author:     Jixin Jia (Gin)     
 Created:    2023/03/01    
 Version:    1.4
   
 <hr>
+
+## Key Features  
+
+1. `Transcribe` conversations in real-time
+2. Simultaneously `translate` into multiple languages
+3. Identify speaker (`diarization`)
+4. Analyze speech `sentiment` in live
+5. `Summarize conversation` and get a glance at important topics  
+
 
 ## About    
 

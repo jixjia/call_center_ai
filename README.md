@@ -95,4 +95,4 @@ Enjoy the demo !
 
 ## Credit
 
-Special thanks to Nobu Tanahashi for his ingenious Conversation Transcription source code and idea used in this demo.
+Special thanks to [Nobu Tanahashi](https://github.com/notanaha) for his ingenious Conversation Transcription source code and idea used in this demo.

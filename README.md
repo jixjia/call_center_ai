@@ -90,3 +90,9 @@ Type following in address bar:
 
 
 Enjoy the demo !
+
+<br>
+
+## Credit
+
+Special thanks to Nobu Tanahashi for his ingenious Conversation Transcription source code and idea used in this demo.

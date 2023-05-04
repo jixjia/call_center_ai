@@ -14,9 +14,9 @@ Version:    1.4
 
 1. `Transcribe` conversations in real-time
 2. Simultaneously `translate` into multiple languages
-3. Identify speaker (`diarization`)
-4. Analyze speech `sentiment` in live
-5. `Summarize conversation` and get a glance at important topics  
+3. Identify speaker by `diarizing` the conversation
+4. Analyze speech `sentiment` in real-time
+5. `Summarize`conversation and get a list of key topics discussed  
 
 <br>
 

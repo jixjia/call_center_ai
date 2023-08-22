@@ -3,8 +3,8 @@
 This solution demonstrates the application of Microsoft AI and GPT to help solve challenges common to contact center scenarios
 
 Author:     Jixin Jia (Gin)     
-Created:    2023/03/01    
-Version:    1.4
+Created:    2023/03/01
+Version:    2.0
   
 <hr>
 
@@ -16,7 +16,7 @@ Version:    1.4
 2. Simultaneously `translate` into multiple languages
 3. Identify speaker by `diarizing` the conversation
 4. Analyze speech `sentiment` in real-time
-5. `Summarize`conversation and get a list of key topics discussed  
+5. `Summarize`conversation and get a list of key topics discussed using `Azure OpenAI`
 
 <br>
 

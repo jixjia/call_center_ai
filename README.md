@@ -30,9 +30,8 @@ Version:    2.0
 
 |Azure resource| Purpose| Required information|
 |----|----|----|
-|Azure AI Speech Services| For live speech-to-text, speaker diarization and translation | `Azure AI key`, `Azure AI endpoint`, `Azure AI region`, `Speech language`, `Translate langage`|
-|Azure AI Language Services| For real-time sentiment scoring and key named entity recognition | `Azure AI key`, `Azure AI endpoint`, `Azure AI region`|
-|Azure OpenAI Service| For generating call summary and assign a topic to the transcribed call | `Azure OpenAI key`, `Azure OpenAI endpoint`, `Deployed chatgpt model name`|
+|Azure AI Service | For performing live speech-to-text, speaker diarization,  translation and sentiment analysis | `Azure AI key`, `Azure AI endpoint`, `Azure AI region`, `Speech language`, `Translate langage`|
+|Azure OpenAI Service| For generating a conversation summary, identify key entities mentioned and categorize conversation into a main topic | `Azure OpenAI key`, `Azure OpenAI endpoint`, `Deployed chatgpt model name`|
 
 <br>
 

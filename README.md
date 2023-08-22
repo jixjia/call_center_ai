@@ -3,7 +3,7 @@
 This solution demonstrates the application of Microsoft AI and GPT to help solve challenges common to contact center scenarios
 
 Author:     Jixin Jia (Gin)     
-Created:    2023/03/01
+Created:    2023/03/01    
 Version:    2.0
   
 <hr>
@@ -30,9 +30,9 @@ Version:    2.0
 
 |Azure resource| Purpose| Required information|
 |----|----|----|
-|Cognitive Service Speech Services| For live speech-to-text, speaker diarization and translation | `key`, `endpoint`, `spoken language`, `translate target langage`|
-|Cognitive Service Language Services| For real-time sentiment scoring and key named entity recognition | `key`, `endpoint`|
-|Azure OpenAI Service| For generating call summary and assign a topic to the transcribed call | `key`, `endpoint`, `deployed gpt model name`|
+|Azure AI Speech Services| For live speech-to-text, speaker diarization and translation | `Azure AI key`, `Azure AI endpoint`, `Azure AI region`, `Speech language`, `Translate langage`|
+|Azure AI Language Services| For real-time sentiment scoring and key named entity recognition | `Azure AI key`, `Azure AI endpoint`, `Azure AI region`|
+|Azure OpenAI Service| For generating call summary and assign a topic to the transcribed call | `Azure OpenAI key`, `Azure OpenAI endpoint`, `Deployed chatgpt model name`|
 
 <br>
 

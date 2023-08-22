@@ -12,11 +12,10 @@ var SpeechSDK;
 var recognizer;
 var startAsyncButton = $("#startAsyncButton");
 var stopAsyncButton = $("#stopAsyncButton");
-var speechKey = $("#speechKey").val();
-var speechRegion = $("#speechRegion").val();
+var azureAIKey = $("#azureAIKey").val();
+var azureAIRegion = $("#azureAIRegion").val();
 var speechLang = $('select#speechLang').val();
-var languageKey = $("#languageKey").val();
-var languageEndpoint = $("#languageEndpoint").val();
+var azureAIEndpoint = $("#azureAIEndpoint").val();
 var translateLang = $('select#translateLang').val();
 var displaySpeech = $("#displaySpeech");
 var displayTranslation = $("#displayTranslation");
@@ -29,7 +28,7 @@ var divNER = $('#divNER');
 var divOpenAICard = $('#divOpenAICard');
 var divOpenAI = $('#divOpenAI');
 var divOpenAISpinner = $('#divOepnAISpinner');
-var speakerId = 'Speaker0';
+var speakerId = 'Unknown';
 
 // Update parameter selection
 $("select#speechLang").change(function() {
@@ -38,17 +37,14 @@ $("select#speechLang").change(function() {
 $("select#translateLang").change(function() {
     translateLang = $(this).children("option:selected").val();
 });
-$("#speechKey").change(function() {
-    speechKey = $(this).val();
+$("#azureAIKey").change(function() {
+    azureAIKey = $(this).val();
 });
-$("#speechRegion").change(function() {
-    speechRegion = $(this).val();
+$("#azureAIRegion").change(function() {
+    azureAIRegion = $(this).val();
 });
-$("#languageKey").change(function() {
-    languageKey = $(this).val();
-});
-$("#languageEndpoint").change(function() {
-    languageEndpoint = $(this).val();
+$("#azureAIEndpoint").change(function() {
+    azureAIEndpoint = $(this).val();
 });
 $("#aoaiKey").change(function() {
     aoaiKey = $(this).val();
@@ -106,52 +102,30 @@ $(document).ready(function() {
             stopAsyncButton.show();
             
             // Speech config
-            const speechConfig = SpeechSDK.SpeechTranslationConfig.fromSubscription(speechKey, speechRegion);
+            const speechConfig = SpeechSDK.SpeechTranslationConfig.fromSubscription(azureAIKey, azureAIRegion);
             
-            // Set recognition properties
+            // Set properties
             speechConfig.speechRecognitionLanguage = speechLang;
             speechConfig.addTargetLanguage(translateLang);
-            
-            // Set CTS properties
             speechConfig.setProperty("f0f5debc-f8c9-4892-ac4b-90a7ab359fd2", "true");
             speechConfig.setProperty("ConversationTranscriptionInRoomAndOnline", "true");
             speechConfig.setProperty("DifferentiateGuestSpeakers", "true");
             speechConfig.setProperty("TranscriptionService_SingleChannel", "true");
             speechConfig.outputFormat = SpeechSDK.OutputFormat.Simple;
 
-            // Audio config for Recognizer
+            // Audio config
             const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
             
-            // Audio config for Transcriber
-            const audioConfigCTS = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-            
-            // CTS conversation and transcriber
-            var conversation = SpeechSDK.Conversation.createConversationAsync(speechConfig, "myConversation");
-            transcriber = new SpeechSDK.ConversationTranscriber(audioConfigCTS);
-            
-            // Initialize SpeechRecognizer
+            // Initialize transcriber (for Speaker ID)
+            transcriber = new SpeechSDK.ConversationTranscriber(speechConfig, audioConfig);
+            transcriber.startTranscribingAsync(() => {console.log("Transcriber session started successfully");});
+
+            // Initialize recognizer (for Recognition & Translation)
             recognizer = new SpeechSDK.TranslationRecognizer(speechConfig, audioConfig);
-            recognizer.startContinuousRecognitionAsync(console.log('Recognizer session started'));
-
-            // Initialize CTS transcriber
-            transcriber.joinConversationAsync(conversation,
-                function () {
-                    transcriber.transcribing = onRecognizing;
-                    transcriber.transcribed = onRecognized;
-                    transcriber.canceled = onCanceled;
-                    transcriber.sessionStarted = onSessionStarted;
-                    transcriber.sessionStopped = onSessionStopped;
-
-                    transcriber.startTranscribingAsync(
-                        function () { },
-                        function (err) {
-                            console.trace("err - starting transcription: " + err);
-                        }
-                    );
-                },
-            );
+            recognizer.startContinuousRecognitionAsync(console.log('Recognizer session started successfully'));
             
-            // (1) Speech Recognizer (for all Recognizing events)
+
+            // (1) Event Recognizing
             recognizer.recognizing = (s, e) => {
                 var current_time = new Date();
                 time_label = current_time.toLocaleString('en-US', { timeStyle: 'medium', hour12: false});
@@ -161,33 +135,23 @@ $(document).ready(function() {
                 displayTranslation.html(divTranslated.val() + '['+ time_label +'] ' + e.result.translations.get(translateLang));
             };
 
+            // (2) Event Transcribed - Speaker ID and Transcribed texts
+            transcriber.transcribed = function (s, e) {
+                // console.log('Transcribed texts: '+ e.result.text +'\nReason: '+ e.result.reason +'\nRaw Speaker ID: '+ e.result.speakerId);
 
-            // (2) CTS Transcriber (for Transcribed event only)
-            function onRecognizing(s, e) {
-                // Basically do nothing
-                // This is a placeholder
-            };
-
-            function onRecognized(s, e) {
-                if (e.result.reason == SpeechSDK.ResultReason.RecognizedSpeech || e.result.reason == SpeechSDK.ResultReason.TranslatedSpeech) {
-                    var current_time = new Date();
-                    time_label = current_time.toLocaleString('en-US', { timeStyle: 'medium', hour12: false});
-
-                    // append newly recognized phrase to the recognized list
-                    if (e.result.text) {
-                        if (e.result.speakerId == 'Unidentified') {
-                            speakerId = 'Speaker0'
-                        }
-                        else {
-                            speakerId = e.result.speakerId.replace('Guest_','Speaker')
-                        }
-                        divRecognized.append('['+ speakerId +'] '+e.result.text+'\n');
-                        displaySpeech.html(divRecognized.val());
-                    }
+                var current_time = new Date();
+                time_label = current_time.toLocaleString('en-US', { timeStyle: 'medium', hour12: false});
+                
+                // append newly recognized phrase to the recognized list
+                // check if e.result.text length is > 1
+                if (e.result.text.length) {
+                    speakerId = e.result.speakerId;
+                    divRecognized.append('['+ speakerId +'] '+e.result.text+'\n');
+                    displaySpeech.html(divRecognized.val());
                 }
-            };
+            }
 
-            // (3) Speech Recognizer (for Translated event only)
+            // (3) Event Recognized - Translated texts
             recognizer.recognized = (s, e) => {
                 if (e.result.reason == SpeechSDK.ResultReason.RecognizedSpeech || e.result.reason == SpeechSDK.ResultReason.TranslatedSpeech) {
                     var current_time = new Date();
@@ -207,29 +171,7 @@ $(document).ready(function() {
                 }
             };
 
-            
-            // CTS Event handlers
-            function onCanceled (s, e) {
-                console.log(`Transcriber CANCELED: Reason=${e.reason}`);
-                if (e.reason == sdk.CancellationReason.Error) {
-                    console.log(`"Transcriber CANCELED: ErrorCode=${e.errorCode}`);
-                    console.log(`"Transcriber CANCELED: ErrorDetails=${e.errorDetails}`);
-                    console.log("Transcriber CANCELED: Did you set the speech resource key and region values?");
-                }
-                transcriber.close();
-                transcriber = undefined;
-            };
-
-            function onSessionStopped(s, e) {
-                console.log("Transcriber session stopped");
-                // transcriber.close();
-            };
-            
-            function onSessionStarted(s, e) {
-                console.log("Transcriber session started");
-            }
-
-            // Recognizer event handlers
+            // (4) Recognizer exception handlers
             recognizer.canceled = (s, e) => {
                 console.log(`Recognizer CANCELED: Reason=${e.reason}`);
                 if (e.reason == sdk.CancellationReason.Error) {
@@ -246,11 +188,15 @@ $(document).ready(function() {
             };
              
             
-            // Stop Button
+            // Stop Aysnc Button
             stopAsyncButton.on("click", function () {
                 recognizer.stopContinuousRecognitionAsync();
-                transcriber.close();
-                transcriber = undefined;
+                transcriber.stopTranscribingAsync(
+                    () => {
+                      transcriber.close();
+                      transcriber = undefined;
+                    }
+                );
                 startAsyncButton.show();
                 stopAsyncButton.hide();
                 runGPT();
@@ -265,7 +211,6 @@ function runGPT() {
     if ($("#displaySpeech").val().length==0) {
         return;
     }
-    console.log('Communicating with OepnAI endpoint...' + aoaiKey + ' ' + aoaiEndpoint + ' ' + gptModel);
     var form_data = JSON.stringify({
         transcription: $("#displaySpeech").val(),
         aoaiKey: aoaiKey,
@@ -295,7 +240,7 @@ function runGPT() {
             <div class="h5 pb-1 text-gray-800 text-m lh-base fw-light" style="text-align: start;">
                 <h6>Summary</h6>
                 <p class="mute text-m">${response.q1}</p>
-                <h6>Sentiment Score</h6>
+                <h6>Overall Sentiment (0-100)</h6>
                 <p>${response.q2}</p>
                 <h6>Key Entities</h6>
                 <p>${entityHTML}</p>
@@ -319,8 +264,8 @@ function runNER(text, langCode) {
 
     axios({
         method: 'POST',
-        url: `${languageEndpoint}/text/analytics/v3.2-preview.2/entities/recognition/general`,
-        headers: {'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': languageKey},
+        url: `${azureAIEndpoint}/text/analytics/v3.2-preview.2/entities/recognition/general`,
+        headers: {'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': azureAIKey},
         data: payload,
         responseType: 'json',
     }).then(response => {
@@ -407,8 +352,8 @@ function runSentimentAnalysis(text, langCode) {
 
     axios({
         method: 'POST',
-        url: `${languageEndpoint}/text/analytics/v3.0/sentiment`,
-        headers: {'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': languageKey},
+        url: `${azureAIEndpoint}/text/analytics/v3.2-preview.2/sentiment`,
+        headers: {'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': azureAIKey},
         data: payload,
         responseType: 'json',
     }).then(response => {
@@ -427,7 +372,6 @@ function runSentimentAnalysis(text, langCode) {
         if (score_values.length > 15) {
             shiftData(myChart);
         }
-        console.log('sentiment ->', max_sentiment+':'+max_score+'=>'+normalized_score);
         
     }).catch(error => {
         console.error(error)

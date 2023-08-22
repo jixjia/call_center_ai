@@ -50,44 +50,35 @@ Component:  Contact Center AI Demo front view
     <form class="needs-validation" onSubmit="return false;" novalidate>
         <div class="offcanvas-body px-5">
             <div class="mb-3">
-                <label for="speechKey" class="form-label">Speech Service Key</label>
+                <label for="azureAIKey" class="form-label">Azure AI Service Key</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1"><i class="bi bi-lock"></i></span>
-                    <input type="password" class="form-control" id="speechKey" name="speechKey"
-                        value="" placeholder="e.g. key" required>
-                    <div class="invalid-feedback">Please add your Speech service key for the demo</div>
+                    <input type="password" class="form-control" id="azureAIKey" name="azureAIKey"
+                        value="7874d0c534ff4f30958e7f494e5fc2c3" placeholder="e.g. key" required>
+                    <div class="invalid-feedback">Please add your Azure AI multi-service key</div>
                 </div>
             </div>
             <div class="mb-3">
-                <label for="speechRegion" class="form-label">Speech Service Region</label>
+                <label for="azureAIRegion" class="form-label">Azure AI Service Region</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                    <input type="text" class="form-control" id="speechRegion" name="speechRegion" value=""
+                    <input type="text" class="form-control" id="azureAIRegion" name="azureAIRegion" value="eastus"
                         placeholder="e.g. eastus" required>
-                    <div class="invalid-feedback">Please enter Speech service region</div>
+                    <div class="invalid-feedback">Please enter Azure AI resource region</div>
                 </div>
             </div>
             <div class="mb-3">
-                <label for="languageKey" class="form-label">Language Service Key</label>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="basic-addon1"><i class="bi bi-lock"></i></span>
-                    <input type="password" class="form-control" id="languageKey" name="languageKey"
-                        value="" placeholder="e.g. key" required>
-                    <div class="invalid-feedback">Please add your Language service key for the demo</div>
-                </div>
-            </div>
-            <div class="mb-3">
-                <label for="languageEndpoint" class="form-label">Language Endpoint</label>
+                <label for="azureAIEndpoint" class="form-label">Azure AI Service Endpoint</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                    <input type="text" class="form-control" id="languageEndpoint" name="languageEndpoint"
-                        value=""
-                        placeholder="e.g. https://westus2.api.cognitive.microsoft.com" required>
-                    <div class="invalid-feedback">Please specify the Language service endpoint</div>
+                    <input type="text" class="form-control" id="azureAIEndpoint" name="azureAIEndpoint"
+                        value="https://cognitive-jixjia-dev.cognitiveservices.azure.com/"
+                        placeholder="e.g. https://YOUR_RESOURCE.cognitiveservices.azure.com/" required>
+                    <div class="invalid-feedback">Please enter the Azure AI service endpoint</div>
                 </div>
             </div>
             <div class="mb-3">
-                <label for="speechLang" class="form-label">Speech Language</label>
+                <label for="speechLang" class="form-label">I speak</label>
                 <div class="input-group mb-3">
                     <select id="speechLang" class="form-select" name="speechLang">
                         <option value="en-US" selected>English</option>
@@ -123,8 +114,8 @@ Component:  Contact Center AI Demo front view
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1"><i class="bi bi-lock"></i></span>
                     <input type="password" class="form-control" id="aoaiKey" name="aoaiKey"
-                        value="" placeholder="e.g. key" required>
-                    <div class="invalid-feedback">Please add your AOAI API key for the demo</div>
+                        value="864e692d8ed3495fbc8cf0a468b99b6d" placeholder="e.g. key" required>
+                    <div class="invalid-feedback">Please add your AOAI key for the demo</div>
                 </div>
             </div>
             <div class="mb-3">
@@ -132,16 +123,16 @@ Component:  Contact Center AI Demo front view
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                     <input type="text" class="form-control" id="aoaiEndpoint" name="aoaiEndpoint"
-                        value="" placeholder="e.g. https://YOUR_ENDPOINT.openai.azure.com/" required>
+                        value="https://oai-jixjia-dev.openai.azure.com/" placeholder="e.g. https://YOUR_RESOURCE.openai.azure.com/" required>
                     <div class="invalid-feedback">Please add your AOAI service endpoint</div>
                 </div>
             </div>
             <div class="mb-3">
-                <label for="gptModel" class="form-label">GPT Model Name</label>
+                <label for="gptModel" class="form-label">Deployment Name</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                     <input type="text" class="form-control" id="gptModel" name="gptModel"
-                        value="" placeholder="e.g. text-davinci-003" required>
+                        value="gpt35-turbo" placeholder="e.g. gpt-35-turbo" required>
                     <div class="invalid-feedback">Please specify your deployed GPT model name</div>
                 </div>
             </div>
@@ -171,7 +162,7 @@ Component:  Contact Center AI Demo front view
             </div> -->
 
             <!-- Left: Info Panel -->
-            <div class="col-xl-3 col-lg-6">
+            <div class="col-xl-3 col-md-3">
                 <div class="card border-left-warning shadow mb-4">
                     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                         <h6 class="m-0 font-weight-bold text-primary">GUIDE</h6>
@@ -197,7 +188,7 @@ Component:  Contact Center AI Demo front view
                 </div>
             </div>
             <!-- Right: Demo -->
-            <div class="col-xl-9 col-lg-6">
+            <div class="col-xl-9 col-md-9">
                 <!-- Content Row: Transcribe & Translate -->
                 <div class="row">
                     <!-- Speech Recognized -->
@@ -252,7 +243,7 @@ Component:  Contact Center AI Demo front view
                     <div class="col-xl-8 col-lg-7">
                         <div class="card shadow mb-4">
                             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                <h6 class="m-0 font-weight-bold text-primary text-uppercase">Conversation Sentiment</h6>
+                                <h6 class="m-0 font-weight-bold text-primary text-uppercase">Sentence Sentiment</h6>
                             </div>
                             <div class="card-body callcenter-body-card">
                                 <div class="chart-area">

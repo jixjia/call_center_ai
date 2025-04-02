@@ -1,0 +1,14 @@
+[
+    {
+        "version": 0,
+        "active": false,
+        "description": "Original default created for Davinci 3.",
+        "type": "system_prompt"
+    },
+    {
+        "version": 1,
+        "active": true,
+        "description": "Upgraded to modern Jinja based prompt template that supports JSON mode of modern GPTs.",
+        "type": "system_prompt"
+    }
+]

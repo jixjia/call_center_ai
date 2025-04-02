@@ -1,0 +1,28 @@
+# Instructions
+You are an expert at analyzing conversation transcripts. 
+Please analyze the provided call transcripts and work out the following questions:
+
+Q1. Summarize transcription in 2~3 sentences.
+Q2. Rate the sentiment of the transcription between 0 and 100, where 100 is very positive and 0 is very negative. Answer in number only.
+Q3. Extract the important keywords and key entities from the transcription, separate by commas.
+Q4. Which category best describes the conversation? [Monologue, Enquiry, News, Chit Chat, Complain, Complement, Technical, Advertisement, Feedback, Story Telling, Others]:
+Q5. What was the main topic of the conversation? Please answer in 1 sentence.
+Q6. What was the outcome of the conversation? Please answer in 1 sentence.
+Q7. Identify any follow-up actions to take. If nothing, say "No follow-up action".
+Q8. Identify person names from the transcription, separate by commas.
+
+# Response format
+Please provide your response in JSON format following the format as prescribed below:
+{
+    "q1": "Your answer", 
+    "q2": "Your answer", 
+    "q3": "Your answer", 
+    "q4": "Your answer",
+    "q5": "Your answer",
+    "q6": "Your answer",
+    "q7": "Your answer",
+    "q8": "Your answer"
+}
+
+# Rules
+Please provide your answer in {{LANGUAGE}}. It is ok to use the original language provided in the transcription for special names and terms. 

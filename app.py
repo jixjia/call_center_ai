@@ -3,38 +3,53 @@ Component:  Contact Center AI Demo
 Purpose:    This is a demo solution showcasing AI applied in contact center solutions with the power of GPT
 Author:     Jixin Jia (Gin)
 Created:    2022/10/12
-Version:    1.4
+Version:    2.0
+History:    1.0 2022/10/12 original creation
+            1.1 2023/01/10 added support for Azure OpenAI Service
+            1.2 2023/04/11 upgraded Speech Swagger JS SDK
+            2.0 2025/03/31 upgraded to Azure OpenAI 1.69.x. Overhauled to leverage Responses API (March 2025)
 '''
 
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, Response, session, send_from_directory
+from flask_session import Session
 from flask_cors import CORS
-from flask_session import Session  # https://pythonhosted.org/Flask-Session
+from functools import wraps
 import json
 import logging
-import openai
-import re
+from datetime import datetime, timedelta
+from utilities import timeout_utils as tu
+from utilities import aoai_utils as au
 from utilities import config
 
 
+# instantiate flask app
 app = Flask(__name__)
 app.secret_key = config.APP_SECRET
-app.config['JWT_SECRET_KEY'] = config.JWT_SECRET
-app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_SIZE * 1024*1024
+app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_LENGTH *1024*1024
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=config.SESSION_TIMEOUT)
 CORS(app)
 Session(app)
 
 # set logging level
 logging.basicConfig(level=logging.WARNING)
 
-# For generating https scheme when deployed behind reverse proxy
+# Needed for url_for("foo", _external=True) to automatically
+# generate http scheme when this sample is running on localhost,
+# and to generate https scheme when it is deployed behind reversed proxy.
+# Ref: https://flask.palletsprojects.com/en/2.2.x/deploying/proxy_fix/
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 
 @app.route('/', methods=['GET'])
-def callcenter():
-    return render_template('call_center_ai.html')
+def index():
+    return render_template('index.html')
 
+@app.route('/jp', methods=['GET'])
+def jp():
+    return render_template('jp.html')
 
 @app.route('/gpt', methods=['POST'])
 def gpt():
@@ -43,65 +58,42 @@ def gpt():
         transcription = data['transcription']
         aoaiKey = data['aoaiKey']
         aoaiEndpoint = data['aoaiEndpoint']
-        gptModel = data['gptModel']
-
-        # Call Azure OpenAI text-davinci-003 model
-        openai.api_type = 'azure'
-        openai.api_version = '2023-06-01-preview'
-        openai.api_key = aoaiKey
-        openai.api_base =  aoaiEndpoint
+        model = data['aoaiModel']
+        language = data['lang']
         
+        # Instantiate the Azure OpenAI client
+        gpt = au.AOAIClient(aoai_endpoint=aoaiEndpoint, aoai_key=aoaiKey)
 
-        system_message = '''
-        You are an expert at analyzing conversation transcripts. 
-        Please analyze the transcribed texts provided by user, and work out the following:
+        developer_messages = gpt.load_template('instruction').render(LANGUAGE=language)
 
-        Q1>. Summarize transcription in two short sentences:
-        Q2>. Rate sentiment of the transcription between 0 and 100, answer in number:
-        Q3>. Extract key entities from transcription:
-        Q4>. Which category best describes the transcription [monologue, enquiry, news, chitchat, complain, complement, other]:
+        schema={
+                "format": {
+                    "type": "json_schema",
+                    "name": "conversation_analysis",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "q1": {"type": "string"},
+                            "q2": {"type": "integer"},
+                            "q3": {"type": "string"},
+                            "q4": {"type": "string"},
+                            "q5": {"type": "string"},
+                            "q6": {"type": "string"},
+                            "q7": {"type": "string"},
+                            "q8": {"type": "string"}
+                        },
+                        "required": ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8"],
+                        "additionalProperties": False
+                    },
+                    "strict": True
+                }
+            }
 
-        Plase be concise with your answers and adhere to the following JSON format:
-        {{"q1": "", "q2": "", "q3": "", "q4":""}}
-        '''
+        res = gpt.make_response(model, developer_messages, transcription, None, schema)
+        outputs = json.loads(gpt.get_aoai_text(res))
+        outputs['status'] = 'ok'
 
-        # truncate inputs to the word limit
-        transcription = transcription[:2000]
-
-        # create user / system messages
-        messages = [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": f"Please help me analyze my transcribed texts and answer the four questions:\n {transcription}"}
-        ]
-
-        response = openai.ChatCompletion.create(
-                                        engine=gptModel,
-                                        messages=messages, 
-                                        temperature=0,
-                                        n=1)
-        text = response['choices'][0]['message']['content']
-
-        # extract fields from GPT answer
-        results = json.loads(text)
-
-        q1 = results['q1'] if 'q1' in results else 'N/A'
-        q2 = results['q2'] if 'q2' in results else 'N/A'
-        q3 = results['q3'].split(',') if 'q3' in results else []
-        q4 = results['q4'] if 'q4' in results else 'N/A'
-
-
-        print('q1: ', q1)
-        print('q2: ', q2)
-        print('q3: ', q3)
-        print('q4: ', q4)
-
-        return json.dumps({
-            'status': 'OK', 
-            'q1': q1, 
-            'q2': q2, 
-            'q3': q3, 
-            'q4': q4
-        })
+        return outputs
         
     except Exception as e:
         print(e.args)

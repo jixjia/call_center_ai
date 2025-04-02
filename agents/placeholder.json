@@ -1,0 +1,16 @@
+{
+    "type": "function",
+    "function": {
+        "name": "do_not_use",
+        "description": "This is a placeholder only. DO NOT USE.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string",
+                    "description": "Some description. IGNORE."
+                }
+            }
+        }
+    }
+}

@@ -5,7 +5,9 @@ Component:  Contact Center AI Demo js component
 Author:     Jixin Jia (Gin)
 */
 
-var gpt_loading_spinner = '<div id="openai_spinner" class="h-center"><div class="spinner-border text-success mb-2 loading-icon" role="status"></div><p class="mute text-s">Summarizing...</p></div>'
+var loading = '<span class="loader"></span>';
+var micStandbyIcon = '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>';
+var micReadyIcon = '<i class="bi bi-mic-fill text-4xl"></i>';
 
 // Speech Recognition & Translation with Speech SDK
 var SpeechSDK;
@@ -16,20 +18,25 @@ var azureAIKey = $("#azureAIKey").val();
 var azureAIRegion = $("#azureAIRegion").val();
 var speechLang = $('select#speechLang').val();
 var azureAIEndpoint = $("#azureAIEndpoint").val();
+var translatorKey = $("#translatorKey").val();
+var translatorRegion = $("#translatorRegion").val();
 var translateLang = $('select#translateLang').val();
+var translateLangLabel = $('select#translateLang option:selected').text();
 var displaySpeech = $("#displaySpeech");
 var displayTranslation = $("#displayTranslation");
 var divRecognized = $('#divRecognized');
 var divTranslated = $('#divTranslated');
 var aoaiKey = $("#aoaiKey").val();
 var aoaiEndpoint = $("#aoaiEndpoint").val();
-var gptModel = $("#gptModel").val();
+var aoaiModel = $("#aoaiModel").val();
 var divNER = $('#divNER');
 var divOpenAICard = $('#divOpenAICard');
 var divOpenAI = $('#divOpenAI');
 var divOpenAISpinner = $('#divOepnAISpinner');
-var speakerId = 'Unknown';
-var autoDetectSourceLanguageConfig = SpeechSDK.AutoDetectSourceLanguageConfig.fromLanguages([("en-US", "ja-JP", "zh-CN"]);
+var detectedLang = 'en';
+var speakerID = 'Guest-1';
+var defaultSpeakerId = 'Guest-1';
+var divFullReport = $('#divFullReport');
 
 // Update parameter selection
 $("select#speechLang").change(function() {
@@ -37,6 +44,7 @@ $("select#speechLang").change(function() {
 });
 $("select#translateLang").change(function() {
     translateLang = $(this).children("option:selected").val();
+    translateLangLabel = $(this).children("option:selected").text();
 });
 $("#azureAIKey").change(function() {
     azureAIKey = $(this).val();
@@ -47,23 +55,69 @@ $("#azureAIRegion").change(function() {
 $("#azureAIEndpoint").change(function() {
     azureAIEndpoint = $(this).val();
 });
+$("#translatorKey").change(function() {
+    translatorKey = $(this).val();
+});
+$("#translatorRegion").change(function() {
+    translatorRegion = $(this).val();
+});
 $("#aoaiKey").change(function() {
     aoaiKey = $(this).val();
 });
 $("#aoaiEndpoint").change(function() {
     aoaiEndpoint = $(this).val();
 });
-$("#gptModel").change(function() {
-    gptModel = $(this).val();
+$("#aoaiModel").change(function() {
+    aoaiModel = $(this).val();
 });
 
+/*
+ Common Utilities
+*/
 
-// On DOM ready load SpeechSDK and start MediaRecorder
+function appendToLocalStorage(key, value) {
+    var contents = getLocalStorage(key);
+    localStorage.setItem(key, value + contents);
+}
+
+function getLocalStorage(key) {
+    var contents = localStorage.getItem(key);
+    if (contents === null) {
+        return '';
+    }
+    else {
+        return contents;
+    }
+}
+
+function getSpeakerColor(speakerID) {
+    const colorNames = ['info', 'warning', 'danger', 'success', 'light'];
+  
+    // Extract number from 'Guest-1', 'Guest-2', etc.
+    const match = speakerID.match(/(\d+)/);
+    if (!match) return 'light'; // fallback if format is unexpected
+    const num = parseInt(match[1], 10);
+    const index = (num - 1) % colorNames.length;
+  
+    return colorNames[index];
+  }
+
+let recognizerStarted = false;
+let transcriberStarted = false;
+
+function checkSpeechStatus() {
+    if (recognizerStarted && transcriberStarted) {
+        console.log("Recognizer and transcriber started!");
+        stopAsyncButton.html(micReadyIcon);
+    }
+}
+
+
+// DOM load
 $(document).ready(function() {  
     
     // Show pre-loading page
-    // var random_queue_time = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
-    var random_queue_time = 0;
+    var random_queue_time = Math.floor(Math.random() * (2000 - 500 + 1)) + 500;
     
     setTimeout(function(){
         if (!!window.SpeechSDK) {
@@ -72,15 +126,14 @@ $(document).ready(function() {
             $('#warning').hide();
             $('#demo-container').show();
         }
-    },random_queue_time);
+    }, random_queue_time);
     
-    // Speech-to-text and Speech Translation from audio stream
+    // Start audio stream
     startAsyncButton.on("click", function(event) {
         
-        // Fetch forms and check input validation (Speech/Language Key) 
+        // Key validation 
         var forms = document.querySelectorAll('.needs-validation');
         Array.prototype.slice.call(forms).forEach(function (form) {
-
             if (!form.checkValidity()) {
                 event.preventDefault()
                 event.stopPropagation()
@@ -88,7 +141,6 @@ $(document).ready(function() {
             form.classList.add('was-validated')
         })
 
-        // Check validity
         if (!forms[0].checkValidity()) {
             // Open setup page
             console.log('Keys not set. opening setup page');
@@ -101,105 +153,107 @@ $(document).ready(function() {
             // Toggle mic on/off button
             startAsyncButton.hide();
             stopAsyncButton.show();
-            
-            // Speech Translation config
-            const speechConfig = SpeechSDK.SpeechTranslationConfig.fromSubscription(azureAIKey, azureAIRegion);
-            
-            // Set properties
-            speechConfig.speechRecognitionLanguage = speechLang;
-            speechConfig.addTargetLanguage(translateLang);
-            speechConfig.setProperty("f0f5debc-f8c9-4892-ac4b-90a7ab359fd2", "true");
-            speechConfig.setProperty("ConversationTranscriptionInRoomAndOnline", "true");
-            speechConfig.setProperty("DifferentiateGuestSpeakers", "true");
-            speechConfig.setProperty("TranscriptionService_SingleChannel", "true");
-            speechConfig.outputFormat = SpeechSDK.OutputFormat.Simple;
 
-            // Audio config
+            // Reset local storage
+            localStorage.clear();
+            
+            // Audio setup
             const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
             
-            // Initialize transcriber (for Speaker ID)
-            transcriber = new SpeechSDK.ConversationTranscriber(speechConfig, audioConfig);
-            transcriber.startTranscribingAsync(() => {console.log("Transcriber session started successfully");});
-
-            // Initialize recognizer (for Recognition & Translation)
-            recognizer = new SpeechSDK.TranslationRecognizer(speechConfig, audioConfig);
-            recognizer.startContinuousRecognitionAsync(console.log('Recognizer session started successfully'));
+            // Continuous LID setup
+            const autoDetectSourceLanguageConfig = SpeechSDK.AutoDetectSourceLanguageConfig.fromLanguages(["en-US", "ja-JP", "zh-CN", "ko-KR", "es-ES", "de-DE", "fr-FR"]);
             
+            // Speech config with Continuous LID and Transcriber Diarization
+            const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(azureAIKey, azureAIRegion);
+            speechConfig.setProperty(SpeechSDK.PropertyId.SpeechServiceConnection_LanguageIdMode, "Continuous");
+            speechConfig.setProperty(SpeechSDK.PropertyId.SpeechServiceConnection_SpeakerDiarizationMode,"True");
+            const recognizer =  SpeechSDK.SpeechRecognizer.FromConfig(speechConfig, autoDetectSourceLanguageConfig, audioConfig);
+            const transcriber = SpeechSDK.ConversationTranscriber.FromConfig(speechConfig, autoDetectSourceLanguageConfig, audioConfig);
 
-            // (1) Event Recognizing
+            // Start recognition
+            recognizer.startContinuousRecognitionAsync(() => {
+                recognizerStarted = true;
+                checkSpeechStatus();
+            }, (err) => {
+                console.error("Recognizer failed to start:", err);
+            });
+            
+            transcriber.startTranscribingAsync(() => {
+                transcriberStarted = true;
+                checkSpeechStatus();
+            }, (err) => {
+                console.error("Transcriber failed to start:", err);
+            });
+            
+            // Event handling
             recognizer.recognizing = (s, e) => {
-                var current_time = new Date();
-                time_label = current_time.toLocaleString('en-US', { timeStyle: 'medium', hour12: false});
+                var timeNow = new Date();
+                var timeLabel = timeNow.toLocaleString('en-US', { timeStyle: 'medium', hour12: false});
+                var displayText = `[${timeLabel}] ${e.result.text}<br>`;
                 
-                // Update display window with in-progress recognition & translation
-                displaySpeech.html(divRecognized.val() + '['+ time_label +'] ' +e.result.text);
-                displayTranslation.html(divTranslated.val() + '['+ time_label +'] ' + e.result.translations.get(translateLang));
+                displaySpeech.html(displayText + getLocalStorage('recognized'));
             };
-
-            // (2) Event Transcribed - Speaker ID and Transcribed texts
-            transcriber.transcribed = function (s, e) {
-                // console.log('Transcribed texts: '+ e.result.text +'\nReason: '+ e.result.reason +'\nRaw Speaker ID: '+ e.result.speakerId);
-
-                var current_time = new Date();
-                time_label = current_time.toLocaleString('en-US', { timeStyle: 'medium', hour12: false});
-                
-                // append newly recognized phrase to the recognized list
-                // check if e.result.text length is > 1
-                if (e.result.text.length) {
-                    speakerId = e.result.speakerId;
-                    divRecognized.append('['+ speakerId +'] '+e.result.text+'\n');
-                    displaySpeech.html(divRecognized.val());
-                }
-            }
-
-            // (3) Event Recognized - Translated texts
-            recognizer.recognized = (s, e) => {
-                if (e.result.reason == SpeechSDK.ResultReason.RecognizedSpeech || e.result.reason == SpeechSDK.ResultReason.TranslatedSpeech) {
-                    var current_time = new Date();
-                    time_label = current_time.toLocaleString('en-US', { timeStyle: 'medium', hour12: false});
-
-                    if (e.result.text) {
-                        langCode = speechLang.substring(0, speechLang.indexOf('-'));
-                        runSentimentAnalysis(e.result.text, langCode);
-                        // runNER(e.result.text, langCode);
-                    }
-                    
-                    // append newly translated phrase to the translated list
-                    if (e.result.translations.get(translateLang)) {
-                        divTranslated.append('['+ speakerId +'] '+e.result.translations.get(translateLang)+'\n');
-                        displayTranslation.html(divTranslated.val());
-                    }
-                }
-            };
-
-            // (4) Recognizer exception handlers
-            recognizer.canceled = (s, e) => {
-                console.log(`Recognizer CANCELED: Reason=${e.reason}`);
-                if (e.reason == sdk.CancellationReason.Error) {
-                    console.log(`"Recognizer CANCELED: ErrorCode=${e.errorCode}`);
-                    console.log(`"Recognizer CANCELED: ErrorDetails=${e.errorDetails}`);
-                    console.log("Recognizer CANCELED: Did you set the speech resource key and region values?");
-                }
-                recognizer.stopContinuousRecognitionAsync();
-            };
-
-            recognizer.sessionStopped = (s, e) => {
-                console.log("Recognizer session stopped");
-                recognizer.stopContinuousRecognitionAsync();
-            };
-             
             
+            transcriber.transcribed = function(s, e) {
+                if (e.result.text) {
+                    var speakerID = e.result.speakerId == 'Unknonwn' ? defaultSpeakerId : e.result.speakerId;
+                    var speakerColor = getSpeakerColor(speakerID);
+                    var displayText = `<span class="text-${speakerColor}">[${speakerID}]</span> ${e.result.text}<br>`;
+                    displaySpeech.html(displayText + getLocalStorage('recognized'));   
+                    appendToLocalStorage('recognized', displayText);
+
+                    // Trigger Translation
+                    runTranslation(speakerID, e.result.text);
+                }
+                
+                // if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech || e.result.reason == SpeechSDK.ResultReason.TranslatedSpeech) {
+                //     speakerID = e.result.speakerId ? e.result.speakerId : defaultSpeakerId;
+                //     langDetected = SpeechSDK.AutoDetectSourceLanguageResult.fromResult(e.result);
+                //     transcribed = $`[${speakerID}] ${e.result.text} (${langDetected.language})`;
+                //     appendToLocalStorage('recognized', transcribed);
+                //     displaySpeech.html(transcribed);
+                //     console.log("TRANSCRIBED: " + e.result.text + "Speaker ID=" + e.result.speakerId);
+                // } else {
+                //     console.log(`Transcriber encountered an error (${e.result.reason})`);
+                // }
+            };
+
+            recognizer.recognized = (s, e) => {
+                if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech || e.result.reason == SpeechSDK.ResultReason.TranslatedSpeech) {
+                    const langDetectResult = SpeechSDK.AutoDetectSourceLanguageResult.fromResult(e.result);
+                    const detectedLang = langDetectResult.language;
+                    console.log(`Detected Language: ${detectedLang}`);
+                    
+                    // Trigger Sentiment Analysis & Translation
+                    runSentimentAnalysis(e.result.text, detectedLang);
+
+                } else if (e.result.reason === SpeechSDK.ResultReason.NoMatch) {
+                    console.log("NOMATCH: Speech could not be recognized.");
+                }
+            };
+            
+            recognizer.canceled = (s, e) => {
+                console.log(`CANCELED: Reason=${e.reason}`);
+                if (e.reason === SpeechSDK.CancellationReason.Error) {
+                    console.log(`CANCELED: ErrorCode=${e.errorCode}`);
+                    console.log(`CANCELED: ErrorDetails=${e.errorDetails}`);
+                    console.log("CANCELED: Did you set the speech resource key and region values?");
+                }
+                recognizer.stopContinuousRecognitionAsync();
+            };
+            
+            recognizer.sessionStopped = (s, e) => {
+                console.log("Session stopped.");
+                recognizer.stopContinuousRecognitionAsync();
+            };
+            
+
             // Stop Aysnc Button
             stopAsyncButton.on("click", function () {
                 recognizer.stopContinuousRecognitionAsync();
-                transcriber.stopTranscribingAsync(
-                    () => {
-                      transcriber.close();
-                      transcriber = undefined;
-                    }
-                );
                 startAsyncButton.show();
                 stopAsyncButton.hide();
+                stopAsyncButton.html(micStandbyIcon);
                 runGPT();
             });
         }
@@ -207,16 +261,55 @@ $(document).ready(function() {
 });
 
 
+// Trigger Translation
+function runTranslation(speakerID, text) {    
+    const body = [{text: text}];
+    const params = {
+        'api-version': '3.0',
+        'to': translateLang 
+    };
+    const headers = {
+        'Ocp-Apim-Subscription-Key': translatorKey,
+        'Ocp-Apim-Subscription-Region': translatorRegion,
+        'Content-type': 'application/json'
+    };
+    const url = 'https://api.cognitive.microsofttranslator.com/translate';
+    axios.post(url, body, { params, headers })
+        .then(response => {
+            // console.log(JSON.stringify(response.data, null, 2));
+            const translatedText = response.data[0].translations[0].text;
+            const displayText = translatedText + '<br>';
+            const speakerColor = getSpeakerColor(speakerID);
+            displayTranslation.html(`<span class="text-${speakerColor}">[${speakerID}]</span> ${displayText}` + getLocalStorage('translated'));
+            appendToLocalStorage('translated', `<span class="text-${speakerColor}">[${speakerID}]</span> ${displayText}`);
+        })
+        .catch(error => {
+            console.error('Translation API error:', error.response ? error.response.data : error.message);
+        });
+};
+
 // Trigger OpenAI
+function processEntities(input) {
+    const className = "badge badge-success rounded-pill text-light px-3 mb-1 me-1 text-s lh-base";
+    return input
+      .split(",")
+      .map(kw => kw.trim())
+      .filter(kw => kw)
+      .map(kw => `<span class="${className}">${kw}</span>`)
+      .join("\n");
+  }
+
 function runGPT() {
-    if ($("#displaySpeech").val().length==0) {
+    // Check if transcription contains any letter (a-z, A-Z) or digit (0-9), if not stop processing
+    if (/[a-zA-Z0-9]/.test($("#displaySpeech").text()) === false) {
         return;
     }
     var form_data = JSON.stringify({
-        transcription: $("#displaySpeech").val(),
+        transcription: $("#displaySpeech").html(),
         aoaiKey: aoaiKey,
         aoaiEndpoint: aoaiEndpoint,
-        gptModel: gptModel
+        aoaiModel: aoaiModel,
+        lang: translateLangLabel,
       });
       $.ajax({
         url: $SCRIPT_ROOT + '/gpt',
@@ -225,30 +318,41 @@ function runGPT() {
         data: form_data,
         dataType: 'json',
         beforeSend: function() {
-            divOpenAI.html(gpt_loading_spinner);
-            divOpenAICard.addClass('v-center');
+            divOpenAI.html(loading);
         }
       }).done(function(response) {
-        divOpenAICard.removeClass('v-center');
-        if (response.status == 'OK') {
-            var entities = response.q3;
-            var arrayLength = entities.length;
-            var entityHTML = '';
-            for (var i = 0; i < arrayLength; i++) {
-                entityHTML += `<span class="badge badge-success rounded-pill text-light px-3 mb-1 me-1 text-s lh-base">${entities[i]}</span>`;
-            }
+        if (response.status == 'ok') {
+            var entityHTML = processEntities(response.q3);
+            divOpenAI.removeClass('align-items-center');
+            divOpenAI.removeClass('justify-content-center');
             divOpenAI.html(`
-            <div class="h5 pb-1 text-gray-800 text-m lh-base fw-light" style="text-align: start;">
-                <h6>Summary</h6>
+            <div class="h5" style="text-align: start;">
+                <h6 class="openai_subheading">重要ポイント</h6>
                 <p class="mute text-m">${response.q1}</p>
-                <h6>Overall Sentiment (0-100)</h6>
-                <p>${response.q2}</p>
-                <h6>Key Entities</h6>
+                <h6 class="openai_subheading">カテゴリ</h6>
+                <p class="mute text-m">${response.q4}</p>
+                <h6 class="openai_subheading">キーワード</h6>
                 <p>${entityHTML}</p>
-                <h6>Topic</h6>
-                <p>${response.q4}</p>
             </div>
             `);
+            divFullReport.html(`
+                <p class="modal_subheading">会話の主旨</p>
+                <p class="modal_text">${response.q5}</p>
+                <p class="modal_subheading">詳細</p>
+                <p class="modal_text">${response.q1}</p>
+                <p class="modal_subheading">結果</p>
+                <p class="modal_text">${response.q6}</p>
+                <p class="modal_subheading">フォローアップ</p>
+                <p class="modal_text">${response.q7}</p>
+                <p class="modal_subheading">トピック</p>            
+                <p>${entityHTML}</p>
+                <p class="modal_subheading">カテゴリ</p>
+                <p class="modal_text">${response.q4}</p>
+                <p class="modal_subheading">主な参加者</p>
+                <p class="modal_text">${response.q8}</p>
+                <p class="modal_subheading">感情スコア</p>
+                <p class="sentiment_score">${response.q2}</p>
+                `);
         } else {
           divOpenAI.html(response.error);
         }
@@ -329,7 +433,7 @@ function runNER(text, langCode) {
     });
 };
 
-// Text Analytics SentimentAnalysis
+// Trigger Sentiment Analysis
 function getNormalizedScore(scoreArray) {
     let max_score = Math.max(...Object.values(scoreArray))
     let max_sentiment = Object.keys(scoreArray).filter(key => scoreArray[key]==max_score)[0];
@@ -444,11 +548,7 @@ const config = {
         plugins: {
             legend: {
                 display: false
-            },
-            title: {
-                display: true,
-                text: 'Realtime Speech Sentiment'
-            },
+            }
         },
         responsive: true,
         maintainAspectRatio: false,
@@ -457,7 +557,11 @@ const config = {
                 display: true,
                 title: {
                     display: false,
-                    text: 'Sentiment Score'
+                    text: 'Sentiment Score',
+                    color: '#eee',
+                },
+                ticks: {
+                    color: '#eee'
                 },
                 suggestedMin: -1,
                 suggestedMax: 1,
@@ -465,16 +569,19 @@ const config = {
                     display: true,
                     borderWidth: 2,
                     borderDash: [3, 3],
-                    color: '#aaa',
+                    color: '#eee',
                     borderDashOffset: 0,
                 }
             },
             x: {
+                ticks: {
+                    color: '#eee',
+                },
                 grid: {
                     display: true,
                     borderWidth: 2,
                     borderDash: [3, 3],
-                    color: '#aaa',
+                    color: '#eee',
                     borderDashOffset: 0,
                 }
             } 

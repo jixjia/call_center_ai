@@ -1,0 +1,308 @@
+<!-- 
+Copyright (C) Jixin Jia (Gin)
+Created for Microsoft GBB AI Solutions Demo Portal
+Component:  Contact Center AI Demo front view
+-->
+
+
+{% extends "template.html" %}
+{% block main %}
+
+<head>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Preload Microsoft Speech SDK -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@latest/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script> -->
+    <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
+</head>
+
+<!-- Laoding SDK -->
+<div id="warning" class="page-loader">
+    <div class="container-fluid h-center text-xl v-center h-100">
+        <div>
+            <span class="loader"></span>
+        </div>
+    </div>
+</div>
+
+
+<!-- Setup sidebar -->
+<div class="offcanvas offcanvas-start bg-gradient-sidebar" tabindex="-1" id="offcanvas" data-bs-keyboard="true"
+    data-bs-backdrop="true">
+    <div class="offcanvas-header px-5 mt-3">
+        <h2 class="offcanvas-title d-none d-sm-block text-gray-800" id="offcanvas">Setup</h2>
+        <button type="button" class="btn text-4xl pe-0" data-bs-dismiss="offcanvas" aria-label="Close"><i
+                class="bi bi-x"></i></button>
+    </div>
+    <form class="needs-validation" onSubmit="return false;" novalidate>
+        <div class="offcanvas-body px-5">
+            <div class="mb-3">
+                <label for="azureAIKey" class="form-label text-gray-800">Azure AI Service Key</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="bi bi-lock"></i></span>
+                    <input type="password" class="form-control" id="azureAIKey" name="azureAIKey"
+                        value="" placeholder="e.g. key" required>
+                    <div class="invalid-feedback">Please add your Azure AI multi-service key</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="azureAIRegion" class="form-label text-gray-800">Azure AI Service Region</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
+                    <input type="text" class="form-control" id="azureAIRegion" name="azureAIRegion" value=""
+                        placeholder="e.g. eastus" required>
+                    <div class="invalid-feedback">入力して下さい</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="azureAIEndpoint" class="form-label text-gray-800">Azure AI Service Endpoint</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
+                    <input type="text" class="form-control" id="azureAIEndpoint" name="azureAIEndpoint"
+                        value=""
+                        placeholder="e.g. https://YOUR_RESOURCE.cognitiveservices.azure.com/" required>
+                    <div class="invalid-feedback">入力して下さい</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="translatorKey" class="form-label text-gray-800">AI Translator Key</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="bi bi-lock"></i></span>
+                    <input type="password" class="form-control" id="translatorKey" name="translatorKey"
+                        value="" placeholder="e.g. key" required>
+                    <div class="invalid-feedback">入力して下さい</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="translatorRegion" class="form-label text-gray-800">AI Translator Region</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
+                    <input type="text" class="form-control" id="translatorRegion" name="translatorRegion" value=""
+                        placeholder="e.g. eastus" required>
+                    <div class="invalid-feedback">入力して下さい</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="translateLang" class="form-label text-gray-800">Display Language</label>
+                <div class="input-group mb-3">
+                    <select id="translateLang" class="form-select" name="translateLang">
+                        <option value="en" selected>English</option>
+                        <option value="ja">日本語 (Japanese)</option>
+                        <option value="zh-Hans">简体中文 (Simplified Chinese)</option>
+                        <option value="zh-Hant">繁體中文 (Traditional Chinese)</option>
+                        <option value="fr">Deutsch (German)</option>
+                        <option value="de">Française (French)</option>
+                        <option value="es">Española (Spanish)</option>
+                        <option value="ko">한국어 (Korean)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="aoaiKey" class="form-label text-gray-800">Azure OpenAI Key</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="bi bi-lock"></i></span>
+                    <input type="password" class="form-control" id="aoaiKey" name="aoaiKey"
+                        value="" placeholder="e.g. key" required>
+                    <div class="invalid-feedback">入力してください</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="aoaiEndpoint" class="form-label text-gray-800">Azure OpenAI Endpoint</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
+                    <input type="text" class="form-control" id="aoaiEndpoint" name="aoaiEndpoint"
+                        value="" placeholder="e.g. https://YOUR_RESOURCE.openai.azure.com/" required>
+                    <div class="invalid-feedback">入力してください</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="aoaiModel" class="form-label text-gray-800">Deploymentf</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
+                    <input type="text" class="form-control" id="aoaiModel" name="aoaiModel"
+                        value="" placeholder="e.g. gpt-4o-mini" required>
+                    <div class="invalid-feedback">入力してください (例 gpt-4o)</div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Demo -->
+<div class="d-flex flex-column container-fluid hide">
+    <!-- Begin Page Content -->
+    <div id="demo-container" class="container-fluid hide">
+        <!-- Header -->
+        <div class="d-sm-flex align-items-center justify-content-between my-3">
+            <h1 class="h3 mb-0 text-white text-700"><img src="../static/images/msft-large-white-xs.png" alt="microsoft logo" class="logo"> 会話支援 AIエージェント</h1>
+            
+            <!-- Debug button -->
+            <!-- <button type="button" class="btn btn-primary" id="debugBtn" onclick="runGPT();">Call GPT</button> -->
+
+            <!-- Gear button -->
+            <button class="btn float-end btn-config" data-bs-toggle="offcanvas" data-bs-target="#offcanvas">
+                <i class="bi bi-list text-4xl text-white" data-bs-toggle="offcanvas" data-bs-target="#offcanvas"></i>
+            </button>
+        </div>
+
+        <!-- Content Row -->
+        <div class="row">
+            <!-- Right: Demo -->
+            <div class="col">
+                <!-- Row 1: -->
+                <div class="row">
+                    <!-- Column 1: Guide -->
+                    <div class="col-xl-2 col-md-2 mb-4">
+                        <div class="border-left-warning shadow card-rounded-border">
+                            <div class="card-body instruction-body-card card-theme card-rounded-border">
+                                <div class="row no-gutters">
+                                    <div class="col mr-2">
+                                        <div class="font-weight-bold text-white text-lg text-uppercase mb-1">
+                                            ガイド
+                                        </div>
+                                        <img class="img-fluid demo-thumbnail mb-4 h-center" src="../static/images/anime-conversation.gif">
+                                        <div class="pe-2 pt-2">
+                                            <ol style="line-height:1.5em;">
+                                                <li>設定ボタン <span class="btn-light rounded-circle px-2 py-1"><i class="bi bi-list"></i></span> からメニューを開く</li>
+                                                <li>キー情報を入力する</li>
+                                                <li>マイク <span class="btn-info rounded-circle px-2 py-1"><i class="bi bi-mic"></i></span> を押してトーク開始</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Column 2: Transcribe -->
+                    <div class="col-xl-5 col-md-5 mb-4">
+                        <div class="border-left-primary shadow card-rounded-border">
+                            <!-- Floating icon -->
+                            <i class="bi bi-whatsapp text-gray-300 text-4xl position-absolute top-0 end-0 me-4 pe-2 mt-2 z-3"></i>
+
+                            <div class="card-body card-theme card-rounded-border">
+                                <div class="row no-gutters">
+                                    <div class="col mr-2">
+                                        <div class="font-weight-bold text-white text-lg text-uppercase mb-1">
+                                            文字起こし (多言語)
+                                        </div>
+                                        <div class="pe-2 pt-2">
+                                            <div id="displaySpeech" class="h5 mt-2 text-white lh-base speech-textarea"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Column 3: Translate -->
+                    <div class="col-xl-5 col-md-5 mb-4">
+                        <div class="card-rounded-border border-left-success shadow">
+                            <!-- Floating icon -->
+                            <i class="bi bi-translate text-gray-300 text-4xl position-absolute top-0 end-0 me-4 pe-2 mt-2 z-3"></i>
+
+                            <div class="card-body card-theme card-rounded-border">
+                                <div class="row no-gutters">
+                                    <div class="col mr-2">
+                                        <div class="font-weight-bold text-white text-uppercase mb-1 text-lg">
+                                            ライブ翻訳
+                                        </div>
+                                        <div class="pe-2 pt-2">
+                                            <div id="displayTranslation"
+                                                class="h5 mt-2 text-white lh-base speech-textarea"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>   
+                </div>
+                <!-- Row 1 End -->
+                
+                <!-- Row 2: -->
+                <div class="row">
+                    <!-- Column 1: Sentiment Graph -->
+                    <div class="col-xl-8 col-lg-7  mb-3">
+                        <div class="card-rounded-border border-left-danger shadow">
+                            <!-- Floating icon -->
+                            <i class="bi bi-heart-pulse text-gray-300 text-4xl position-absolute top-0 end-0 me-4 pe-2 mt-2 z-3"></i>
+
+                            <div class="card-body sentiment-body-card card-theme card-rounded-border">
+                                <div class="row no-gutters">
+                                    <div class="col mr-2">
+                                        <div class="font-weight-bold text-white text-uppercase mb-3 text-lg">
+                                            情緒分析
+                                        </div>
+                                        <div class="chart-area">
+                                            <canvas id="myChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: NER & OpenAI -->
+                    <div class="col-xl-4 col-lg-5  mb-3">
+                        <div class="card-rounded-border border-left-info shadow">
+                            <!-- Floating icon -->
+                            <a class="position-absolute top-0 end-0 me-4 pe-3 mt-3 text-lg customlink" href="#" data-bs-toggle="modal" data-bs-target="#modalReport" style="z-index:1000;"><i class="bi bi-journal-text"></i> Full Report</a>
+
+                            <div class="card-body gpt-body-card card-theme card-rounded-border">
+                                <div class="row h-100">
+                                    <div class="col mr-2">
+                                        <div class="font-weight-bold text-white text-uppercase mb-1 text-lg">
+                                            会話分析
+                                        </div>
+                                        <div id="divOpenAI" class="d-flex justify-content-center align-items-center pt-2 text-white openai-area">
+                                            &nbsp;
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End: Container Row  -->
+
+        <!-- Footer -->
+        <div class="justify-content-between mb-3 h-center">
+            <div class="text-center text-white text-m">&copy; 2025 built by Jixin Jia (Gin)</div>
+        </div>
+
+        <!-- setup button -->
+        <div class="mic">
+            <button id="startAsyncButton" class="btn btn-info rounded-circle p-0 micon">
+                <i class="bi bi-mic text-4xl"></i>
+            </button>
+            <button id="stopAsyncButton" class="btn btn-danger rounded-circle p-0 micoff hide">
+                <i class="fa fa-spinner fa-spin fa-2x fa-fw"></i>
+            </button>
+        </div>
+    </div> <!-- End of Main Content -->
+</div> 
+<!-- Demo: End -->
+
+<!-- Modal -->
+<div class="modal fade" id="modalReport" tabindex="-1" aria-labelledby="modalReportLabel" aria-hidden="true">
+<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+    <div class="modal-header text-gray-800">
+        <h5 class="modal-title font-weight-bold" id="modalReportLabel ps-3">AI会話分析</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div id="divFullReport" class="modal-body text-gray-800 px-5 py-0">&nbsp;</div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">閉じる</button>
+    </div>
+    </div>
+</div>
+</div>
+<!-- Modal: End -->
+
+
+<!-- Call Center AI scripts -->
+<script src="../static/js/call_center_ai.js"></script>
+
+{% endblock %}

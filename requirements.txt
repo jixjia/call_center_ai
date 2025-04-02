@@ -1,29 +1,21 @@
-Flask==2.0.2
-Flask_SocketIO==5.1.1
-gevent==21.12.0
-gevent-websocket==0.10.1
-Flask-Cors==3.0.10
-MarkupSafe==2.0.1 # Required by Azure
-flask_jwt_extended==4.3.1
-flask-restful==0.3.8
-python-engineio==4.3.1
-python-socketio==5.5.2
-eventlet==0.30.2 # Downgraded for Azure
-msal==1.17.0
-Flask-Session==0.4.0
-werkzeug==2.0.2
-imutils==0.5.4
-opencv-python-headless== 4.5.3.56
-azure-cognitiveservices-vision-face==0.6.0
-matplotlib==3.5.1
-numpy==1.18.5
-tensorflow==2.3.1
-protobuf==3.20.0 # Deal with Python 4.21
-azure-ai-textanalytics==5.2.0b4
-azure-ai-language-conversations==1.1.0b2
-moviepy==1.0.3
-azure-storage-blob==12.9.0
-tqdm==4.62.3
-openai==0.27.0
+
+Flask==3.0.3
+Flask-Cors==5.0.0
+Flask-Session==0.8.0
+flask-restful==0.3.10
+
 gunicorn==20.1.0
 waitress==2.1.2 # Gunicorn for Windows
+
+python-dotenv==1.0.1
+MarkupSafe==2.1.2 # Required by Azure
+requests==2.24.0
+identity==0.9.1 # Required for MSAL 1.24 + 
+
+openai==1.69.0
+tenacity==9.0.0
+
+azure-identity==1.19.0
+azure-storage-blob==12.23.1
+azure-data-tables==12.5.0
+azure-ai-translation-text==1.0.1

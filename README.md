@@ -3,10 +3,27 @@
 This solution demonstrates the application of Microsoft AI and GPT to help solve challenges common to contact center scenarios
 
 Author:     Jixin Jia (Gin)     
-Created:    2023/03/01    
-Version:    2.0
-  
+Updated:    2025/04/01 
+Version:    3.0
+
 <hr>
+
+## Change log
+
+Version 1.0 
+- Initial release    
+
+Version 2.0 
+- Updated to use `Conversation Transcriber` for speaker diarization
+- Introduced OpenAI GPT-3 Davinci for `Conversation Analysis`
+
+Version 3.0 
+- Upgraded to Azure OpenAI `Responses API`
+- Introduced Dark theme
+- Simultaneous `multi-lingual recognition` (English, Japanese, Mandarin, Korean, French, Spanish and German)
+- More detailed conversation analysis report
+- Introduced `Azure AI Translator` for realtime text translation
+- Introduced `Japanese UI` accessible via `/jp`
 
 <br>
 
@@ -37,7 +54,13 @@ Version:    2.0
 
 ## See it in action
 
-![Animated Demo](doc/animated_demo.gif)
+Dark theme
+
+![Animated Demo](doc/dark1.png)
+
+AI generated report
+
+![Animated Demo](doc/dark2.png)
 
 
 <br>

@@ -3,10 +3,11 @@
 This solution demonstrates the application of Microsoft AI and GPT to help solve challenges common to contact center scenarios
 
 Author:     Jixin Jia (Gin)     
-Updated:    2025/04/01 
+Updated:    2025/04/01   
 Version:    3.0
 
 <hr>
+<br>
 
 ## Change log
 

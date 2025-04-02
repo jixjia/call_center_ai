@@ -30,26 +30,25 @@ Version 3.0
 
 ## Key Features  
 
-1. `Transcribe` conversations in real-time
-2. Simultaneously `translate` into multiple languages
-3. Identify speaker by `diarizing` the conversation
-4. Analyze speech `sentiment` in real-time
-5. `Summarize`conversation and get a list of key topics discussed using `Azure OpenAI`
+1. `Transcribe` conversations in real-time with auto language detection.
+2. `Translate` into multiple languages of choice.
+3. Speaker separation by `diarizing` the conversation.
+4. Analyze `sentiment` and plot onto real-time chart.
+5. `Summarize`conversation and get insights on key topics discussed.
 
 <br>
 
 ## About    
 
-* This WSGI demo app runs on single instance of Gunicorn for production workload. It is recommended to build it on a docker orchestration service if you target a more scalable workload.
+* This app runs on a single instance of `Gunicorn` for demo purpose.
 
-* All transaction runs within browser (client end). There are no data transmitted to or stored at the backend server in this demo.
+* All API calls is procesed within your browser. No key data is transmitted outside your locally hosted Flask server.
 
-* To run the demo following Azure services must be provisioned and provided at run time:
+* Following Azure AI services are used to run this demo:
 
-|Azure resource| Purpose| Required information|
-|----|----|----|
-|Azure AI Service | For performing live speech-to-text, speaker diarization,  translation and sentiment analysis | `Azure AI key`, `Azure AI endpoint`, `Azure AI region`, `Speech language`, `Translate langage`|
-|Azure OpenAI Service| For generating a conversation summary, identify key entities mentioned and categorize conversation into a main topic | `Azure OpenAI key`, `Azure OpenAI endpoint`, `Deployed chatgpt model name`|
+| Purpose| Services|
+|----|----|
+| For performing live speech-to-text, speaker diarization,  translation and sentiment analysis | `Azure AI Services`, `Azurre AI Text Translation`, `Azure OpenAI`|
 
 <br>
 
